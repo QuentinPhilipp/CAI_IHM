@@ -2,6 +2,10 @@
 # https://stackoverflow.com/questions/34522095/gui-button-hold-down-tkinter
 
 import sys
+from frequencies_V import *
+import sqlite3
+conn = sqlite3.connect('frequencies.db')
+
 if sys.version_info.major == 2:
     print(sys.version)
     from Tkinter import Tk,Frame,Button,Label
@@ -31,7 +35,7 @@ class Octave(Subject) :
         notes=["C","D","E","F","G","A","B","C#","D#","F#","G#","A#"]
         self.gamme=collections.OrderedDict()
         for key in notes :
-            self.gamme[key]="../Sounds/"+key+str(degree)+".wav"
+            self.gamme[key]=folder+"/"+key+str(degree)+".wav"
         return self.gamme
     def get_gamme(self) :
         return self.gamme
@@ -49,15 +53,43 @@ class Screen(Observer):
         self.screen=Frame(self.parent,borderwidth=5,width=500,height=160,bg="pink")
         self.info=Label(self.screen,text="Appuyez sur une touche clavier ", bg="pink",font=('Arial',10))
         self.info.pack()
+
     def get_screen(self) :
         return self.screen
     def update(self,model,key="C") :
         if __debug__:
             if key not in model.gamme.keys()  :
                 raise AssertionError
+
+
+
+        print("Degree : ",model.get_degree())
+        octave = model.get_degree()
+
+        print("Note : ",key)
+
+
+
+        dbOrder = ["id","C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
+        index = dbOrder.index(key)
+
+        print("Get frequency from database to display in the graph")
+        for row in conn.execute('SELECT * FROM frequencies WHERE octave=?', (octave,)):
+            print(row)
+            print("At index : ",index)
+            goodFrequency = row[index]
+            print("frequency : ",goodFrequency)
+
+
+        graph.setFrequency(goodFrequency)
+        
+
         subprocess.call(["aplay", model.get_gamme()[key]])
         if self.info :
             self.info.config(text = "Vous avez joue la note : " + key + str(model.get_degree()))
+
+
+
 
 class Keyboard :
     def __init__(self,parent,model) :
@@ -120,6 +152,9 @@ if __name__ == "__main__" :
     root.geometry("560x300")
     octaves=2
     root.title("La leçon de piano à "+ str(octaves) + " octaves")
+    graph=View(root)
+    graph.grid(4)
     piano=Piano(root,octaves)
     piano.packing()
+    graph.packing()
     root.mainloop()

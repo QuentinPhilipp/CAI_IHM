@@ -31,13 +31,13 @@ class View :
         del self.signal[0:]
         echantillons=range(int(samples)+1)
         Tech = period/samples
-        print("Tech",Tech,period,samples)
+        # print("Tech",Tech,period,samples)
         for t in echantillons :
             self.signal.append([t*Tech,self.vibration(t*Tech)])
-        print(self.signal)
+        # print(self.signal)
         return self.signal
     def update(self):
-        print("View : update()")
+        # print("View : update()")
         self.generate_signal()
         if self.signal :
             self.plot_signal(self.signal)
@@ -71,6 +71,12 @@ class View :
             self.grid(self.units)
     def packing(self) :
         self.canvas.pack(expand=1,fill="both",padx=6)
+
+    def setFrequency(self,frequency):
+        self.generate_signal(frequency)
+        self.canvas.delete("sound")
+        if self.signal :
+            self.plot_signal(self.signal)
 
 if  __name__ == "__main__" :
     root=Tk()

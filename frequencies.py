@@ -21,14 +21,21 @@ cursor.execute("CREATE TABLE frequencies ( \
 );")
 
 
-f0=440.0
+f0=110.0
 frequencies=[]
+octaveList = [0,1,2,3,4]
 octave=[]
-octave.append(3)
-for j in range (-9,3) :
-    frequency=f0*2**(j/12)
-    octave.append(frequency)
-frequencies.append(octave)
+
+for i in range(len(octaveList)):
+    octave.append(i+1)
+    for j in range (-9,3) :
+        frequency=f0*2**(j/12.0)*(2**octaveList[i])
+        octave.append(frequency)
+    frequencies.append(octave)
+    octave = []
+
+
+print(frequencies)
 
 cursor.executemany("INSERT INTO frequencies VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);", frequencies)
 connect.commit()

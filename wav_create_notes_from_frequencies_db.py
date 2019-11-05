@@ -14,13 +14,13 @@ import sqlite3
 def create_note_wav(degree,name,left_frequency,right_frequency) :
     if type(degree) != str :
         degree=str(degree)
-    file= name+degree+".wav"
-    sound=wave.open(file,'w') 
+    file= "Sounds/"+name+degree+".wav"
+    sound=wave.open(file,'w')
     nb_channels = 2    # stéreo
     nb_bytes = 1       # taille d'un échantillon : 1 octet = 8 bits
     sampling = 44100   # fréquence d'échantillonnage
     left_level = 1     # niveau canal de gauche (0 à 1) ? '))
-    right_level= 0.5    # niveau canal de droite (0 à 1) ? '))
+    right_level= 1    # niveau canal de droite (0 à 1) ? '))
     duration = 1
     nb_samples = int(duration*sampling)
     params = (nb_channels,nb_bytes,sampling,nb_samples,'NONE','not compressed')
@@ -30,7 +30,7 @@ def create_note_wav(degree,name,left_frequency,right_frequency) :
     # niveau max dans l'onde négative : -1 ->   0 (0x00)
     # niveau sonore nul :                0 -> 127.5 (0x80 en valeur arrondi)
 
-    left_magnitude = 127.5*left_level 
+    left_magnitude = 127.5*left_level
     right_magnitude= 127.5*right_level
 
     for i in range(0,nb_samples):
