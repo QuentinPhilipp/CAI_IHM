@@ -1,4 +1,5 @@
 from math import sin,pi
+import time
 
 ## from pylab import linspace,sin
 
@@ -22,23 +23,23 @@ class View :
         self.canvas.bind("<Configure>",self.resize)
     def vibration(self,t,harmoniques=1,impair=True):
         a,f,p=self.a,self.f,self.p
-        f=1.0
         somme=0
         for h in range(1,harmoniques+1) :
             somme=somme + (a/h)*sin(2*pi*(f*h)*t-p)
         return somme
-    def generate_signal(self,period=2,samples=100):
+    def generate_signal(self,period=2.0,samples=100):
         del self.signal[0:]
         echantillons=range(int(samples)+1)
         Tech = period/samples
-        # print("Tech",Tech,period,samples)
+        print("Tech",Tech,period,samples)
         for t in echantillons :
             self.signal.append([t*Tech,self.vibration(t*Tech)])
-        # print(self.signal)
+        print("Longueur du signal : ",len(self.signal))
         return self.signal
     def update(self):
-        # print("View : update()")
+        print("View : update()")
         self.generate_signal()
+        self.canvas.delete("sound")
         if self.signal :
             self.plot_signal(self.signal)
     def plot_signal(self,signal,color="red"):
@@ -63,7 +64,7 @@ class View :
             self.canvas.create_line(self.width/2-10,y,self.width/2+10,y,width=3,tags="grid")
     def resize(self,event):
         if event:
-            print("event")
+            print("resize | Height = ",event.height,"Width = ",event.width)
             self.width,self.height=event.width,event.height
             self.canvas.delete("grid")
             self.canvas.delete("sound")
@@ -73,10 +74,7 @@ class View :
         self.canvas.pack(expand=1,fill="both",padx=6)
 
     def setFrequency(self,frequency):
-        self.generate_signal(frequency)
-        self.canvas.delete("sound")
-        if self.signal :
-            self.plot_signal(self.signal)
+        self.f = frequency/100
 
 if  __name__ == "__main__" :
     root=Tk()

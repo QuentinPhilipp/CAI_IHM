@@ -6,14 +6,9 @@ from frequencies_V import *
 import sqlite3
 conn = sqlite3.connect('frequencies.db')
 
-if sys.version_info.major == 2:
-    print(sys.version)
-    from Tkinter import Tk,Frame,Button,Label
-    import tkFileDialog as filedialog
-else:
-    print(sys.version)
-    from tkinter import Tk,Frame,Button,Label
-    from tkinter import filedialog
+print(sys.version)
+
+from tkinter import Tk,Frame,Button,Label
 
 import collections
 
@@ -46,16 +41,19 @@ class Octave(Subject) :
             obs.update(self,key)
 
 class Screen(Observer):
-    def __init__(self,parent) :
+    def __init__(self,parent,degree) :
         self.parent=parent
-        self.create_screen()
-    def create_screen(self) :
-        self.screen=Frame(self.parent,borderwidth=5,width=500,height=160,bg="pink")
-        self.info=Label(self.screen,text="Appuyez sur une touche clavier ", bg="pink",font=('Arial',10))
+        self.create_screen(degree)
+
+    def create_screen(self,degree) :
+        self.screen=Frame(self.parent,borderwidth=5,width=300,height=160,bg="grey")
+        txtToDisplay = "Octave n°" + str(degree)
+        self.info=Label(self.screen,text=txtToDisplay, bg="grey",fg="white",font=('Arial',10))
         self.info.pack()
 
     def get_screen(self) :
         return self.screen
+
     def update(self,model,key="C") :
         if __debug__:
             if key not in model.gamme.keys()  :
@@ -82,11 +80,13 @@ class Screen(Observer):
 
 
         graph.setFrequency(goodFrequency)
+        graph.update()
         
-
-        subprocess.call(["aplay", model.get_gamme()[key]])
         if self.info :
             self.info.config(text = "Vous avez joue la note : " + key + str(model.get_degree()))
+
+        subprocess.call(["aplay", model.get_gamme()[key]])
+
 
 
 
@@ -99,7 +99,7 @@ class Keyboard :
     def create_keyboard(self) :
         key_w,key_h=40,150
         dx_white,dx_black=0,0
-        self.keyboard=Frame(self.parent,borderwidth=5,width=7*key_w,height=key_h,bg="red")
+        self.keyboard=Frame(self.parent,borderwidth=3,width=7*key_w,height=key_h,bg="grey")
         for key in self.model.gamme.keys() :
             if  key.startswith( '#', 1, len(key) ) :
                 delta_w,delta_h=3/4.,2/3.
@@ -112,10 +112,7 @@ class Keyboard :
                 else :
                     dx_black=dx_black+1
             else :
-                if key=="D" and self.model.get_degree() == 3 :
-                    button=Button(self.keyboard,name=key.lower(),bg = "grey")
-                else :
-                    button=Button(self.keyboard,name=key.lower(),bg = "white")
+                button=Button(self.keyboard,name=key.lower(),bg = "white")
                 button.bind("<Button-1>",lambda event,x = key : self.play_note(x))
                 button.place(width=key_w,height=key_h,x=key_w*dx_white,y=0)
                 dx_white=dx_white+1
@@ -123,8 +120,7 @@ class Keyboard :
         self.model.notify(key)
     def get_keyboard(self) :
         return self.keyboard
-    def get_degrees(self) :
-        return self.degrees
+
 
 class Piano :
     def __init__(self,parent,octaves) :
@@ -132,13 +128,13 @@ class Piano :
         self.octaves=[]
         self.frame=Frame(self.parent,bg="yellow")
         for octave in range(octaves) :
-            self.create_octave(self.frame,octave+2)
+            self.create_octave(self.frame,octave+1)
     def create_octave(self,parent,degree=3) :
-        frame=Frame(parent,bg="green")
+        frame=Frame(parent,bg="gray38")
         model=Octave(degree)
         self.octaves.append(model)
         control=Keyboard(frame,model)
-        view=Screen(frame)
+        view=Screen(frame,degree)
         model.attach(view)
         view.get_screen().pack()
         control.get_keyboard().pack()
@@ -149,12 +145,15 @@ class Piano :
 
 if __name__ == "__main__" :
     root = Tk()
-    root.geometry("560x300")
-    octaves=2
+    root.geometry("1400x300")
+    octaves=5
     root.title("La leçon de piano à "+ str(octaves) + " octaves")
     graph=View(root)
     graph.grid(4)
+    graph.update()
     piano=Piano(root,octaves)
+    # mainWindow = MainWindow(root,octaves)
     piano.packing()
+    # mainWindow.packing()
     graph.packing()
     root.mainloop()
