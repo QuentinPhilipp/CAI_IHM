@@ -4,8 +4,7 @@ CREATE TABLE frequency (
                         CSharp float,
                         D float,
                         DSharp float,
-                        E float,BG
-
+                        E float,
                         F float,
                         FSharp float,
                         G float,

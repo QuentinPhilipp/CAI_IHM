@@ -5,6 +5,7 @@ import sys
 from frequencies_V import *
 import sqlite3
 conn = sqlite3.connect('frequencies.db')
+c = conn.cursor()
 
 print(sys.version)
 
@@ -68,15 +69,17 @@ class Screen(Observer):
 
 
 
-        dbOrder = ["id","C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
+        dbOrder = ["octave","C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
         index = dbOrder.index(key)
 
         print("Get frequency from database to display in the graph")
-        for row in conn.execute('SELECT * FROM frequencies WHERE octave=?', (octave,)):
-            print(row)
-            print("At index : ",index)
-            goodFrequency = row[index]
-            print("frequency : ",goodFrequency)
+        c.execute('SELECT * FROM frequencies WHERE octave=?', (octave,))
+        row = c.fetchone()
+        
+        print(row)
+        print("At index : ",index)
+        goodFrequency = row[index]
+        print("frequency : ",goodFrequency)
 
 
         graph.setFrequency(goodFrequency)
@@ -86,7 +89,6 @@ class Screen(Observer):
             self.info.config(text = "Vous avez joue la note : " + key + str(model.get_degree()))
 
         subprocess.call(["aplay", model.get_gamme()[key]])
-
 
 
 
