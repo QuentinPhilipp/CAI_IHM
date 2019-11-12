@@ -7,20 +7,25 @@ from observer import *
 ## from pylab import linspace,sin
 
 import sys
-if sys.version_info.major == 2:
+if sys.version_info.major == 2 and sys.version_info.minor == 7 :
     print(sys.version)
-    from Tkinter import Tk,Canvas
+    import Tkinter as tk
     import tkFileDialog as filedialog
-else:
+elif sys.version_info.major == 3 and sys.version_info.minor == 6 :
     print(sys.version)
-    from tkinter import Tk,Canvas
+    import tkinter as tk
     from tkinter import filedialog
+else :
+    print("Your python version is : ")
+    print(sys.version_info.major,sys.version_info.minor)
+    print("... I guess it will work !")
 
 
 class FreqView(Observer):
-    def __init__(self,parent,bg="grey",width=600,height=300):
+    def __init__(self,parent,bg="white",width=600,height=300):
         Observer.__init__(self)
-        self.canvas=Canvas(parent,bg=bg,width=width,height=height)
+        self.canvas=tk.Canvas(parent,bg=bg,width=width,height=height)
+        self.units=1
         self.signals={}
         self.width,self.height=width,height
         self.canvas.bind("<Configure>",self.resize)
@@ -34,7 +39,7 @@ class FreqView(Observer):
             for name in self.signals.keys():
                 self.canvas.delete(name)
                 self.plot_signal(self.signals[name],name)
-            self.grid()
+            self.grid(self.units)
 
     def packing(self) :
             self.canvas.pack(expand=1,fill="both",padx=6)
@@ -44,16 +49,19 @@ class FreqView(Observer):
         print("View : update()")
         if subject.get_name() not in self.signals.keys():
             self.signals[subject.get_name()]=subject.get_signal()
-        
         else :
             self.canvas.delete(subject.get_name())
         
+
         self.plot_signal(subject.get_signal(),subject.get_name())
+
+
 
     def plot_signal(self, signal,name,color="blue"):
         w,h = self.width,self.height
         if signal and len(signal) >1:
-            plot = [(x*w,h/2.0*(1-y)) for (x, y) in signal]
+            print("Plot signal")
+            plot = [(x*w,h/2.0*(1-y/(self.units/2.0))) for (x, y) in signal]
             self.signal_id = self.canvas.create_line(plot,fill=color,smooth=1,width=2,tags=name)
 
         return self.signal_id
@@ -75,14 +83,17 @@ class FreqView(Observer):
 
 
 if  __name__ == "__main__" :
-    root=Tk()
+    root=tk.Tk()
     root.title("Vue Frequencies")
+    print('Create model')
     model=FreqModel()
+    print("Model created")
     view=FreqView(root)
     view.grid(8)
     view.packing()
-    model.attach(view)
     model.generate_signal()
+    model.attach(view)
     ctrl = FreqController(root,model,view)
     ctrl.packing()
+    view.update(model)
     root.mainloop()
