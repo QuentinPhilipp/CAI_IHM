@@ -34,10 +34,10 @@ class FreqController():
         self.harm = tk.IntVar()
         self.freq = tk.IntVar()
         self.dephas = tk.DoubleVar()
-        self.amp.set=1
-        self.harm.set=1
-        self.freq.set=100
-        self.dephas.set=0.0
+        self.amp.set(1)
+        self.harm.set(1)
+        self.freq.set(100)
+        self.dephas.set(0.0)
 
         self.scaleA=tk.Scale(self.frame,variable=self.amp,label="Amplitude",orient="horizontal",length=250,from_=0,to=5,tickinterval=1)
         self.scaleA.bind("<ButtonRelease-1>",self.update_magnitude)

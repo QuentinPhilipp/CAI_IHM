@@ -86,7 +86,7 @@ if  __name__ == "__main__" :
     root=tk.Tk()
     root.title("Vue Frequencies")
     print('Create model')
-    model=FreqModel()
+    model=FreqModel("signalPiano")
     print("Model created")
     view=FreqView(root)
     view.grid(8)
