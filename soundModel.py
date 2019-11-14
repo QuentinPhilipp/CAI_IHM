@@ -1,5 +1,6 @@
 import sys
 import wave, struct, math, random
+from wav_audio import *
 from observer import *
 import sqlite3
 conn = sqlite3.connect('frequencies.db')
@@ -53,7 +54,7 @@ class SoundGeneratorModel(Subject):
         return frequency[0]     #tuple
 
 
-    def generate(self,degree,name,duration=1000,sampling=44100,folder="GeneratedSounds") :
+    def generateNote(self,degree,name,duration=1000,sampling=44100,folder="GeneratedSounds") :
         if type(degree) != str :
             degree=str(degree)
 
@@ -86,14 +87,37 @@ class SoundGeneratorModel(Subject):
         sound.close()
 
 
+    def generateChords(self,note1,note2,note3):
+        print("Generate Sounds")
+        folder = "Sounds/"
+        note1=folder+str(note1)+'.wav'
+        note2=folder+str(note2)+'.wav'
+        note3=folder+str(note3)+'.wav'
+        data1,framerate1 = open_wav(note1)
+        data2,framerate2 = open_wav(note2)
+        data3,framerate3 = open_wav(note3)
+
+        data = [] # liste des échantillons de l'accord
+
+        for i in range(len(data1)):
+            data.append((1/3)*(data1[i]+data2[i]+data3[i])) # calcul de la moyenne de chacun des échantillons de même index issus des trois listes   
+
+        save_wav('GeneratedSounds/CMajor.wav',data,framerate1)
+
+
+
+
 
 if  __name__ == "__main__" :
     sound = SoundGeneratorModel()
-    sound.generate("3","A",100)
-    sound.generate("3","C",1000)
+    # sound.generateNote("3","A",100)
+    # sound.generateNote("3","C",1000)
 
 
     print("Test FrequencyFromNote : Should return 932.33")
     sound.getFrequencyFromNote(4,"A#")
     print("Test FrequencyFromNote : Should return 146.83")
     sound.getFrequencyFromNote(2,"D")
+
+    sound.generateChords("C3","F3","G3")
+    
