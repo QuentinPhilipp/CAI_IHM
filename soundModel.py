@@ -85,10 +85,12 @@ class SoundGeneratorModel(Subject):
             sound.writeframes(left_value + right_value) # écriture frame
 
         sound.close()
+        self.notify()
 
 
     def generateChords(self,note1,note2,note3):
         print("Generate Sounds")
+        sound=wave.open('GeneratedSounds/CMajor2.wav','w')
         folder = "Sounds/"
         note1=folder+str(note1)+'.wav'
         note2=folder+str(note2)+'.wav'
@@ -96,16 +98,27 @@ class SoundGeneratorModel(Subject):
         data1,framerate1 = open_wav(note1)
         data2,framerate2 = open_wav(note2)
         data3,framerate3 = open_wav(note3)
+        duration =1000
+        sampling=44100
+
+        nb_channels = 2    # stéreo
+        nb_bytes = 1       # taille d'un échantillon : 1 octet = 8 bits
+        left_level = 1     # niveau canal de gauche (0 à 1) ? '))
+        right_level= 1    # niveau canal de droite (0 à 1) ? '))
+        nb_samples = int((duration/1000)*sampling)
+        params = (nb_channels,nb_bytes,sampling,nb_samples,'NONE','not compressed')
+        sound.setparams(params)    # création de l'en-tête (44 octets)
 
         data = [] # liste des échantillons de l'accord
 
         for i in range(len(data1)):
-            data.append((1/3)*(data1[i]+data2[i]+data3[i])) # calcul de la moyenne de chacun des échantillons de même index issus des trois listes   
-
+            data.append((data1[i]+data2[i]+data3[i])/3.0) # calcul de la moyenne de chacun des échantillons de même index issus des trois listes   
+            sound.writeframes(wave.struct.pack('B',128+int((data1[i]+data2[i]+data3[i])/3.0)))
+       
         save_wav('GeneratedSounds/CMajor.wav',data,framerate1)
-
-
-
+        
+        sound.close()
+        self.notify()
 
 
 if  __name__ == "__main__" :
@@ -115,9 +128,11 @@ if  __name__ == "__main__" :
 
 
     print("Test FrequencyFromNote : Should return 932.33")
-    sound.getFrequencyFromNote(4,"A#")
+    f1 = sound.getFrequencyFromNote(4,"A#")
+    print(f1)
     print("Test FrequencyFromNote : Should return 146.83")
-    sound.getFrequencyFromNote(2,"D")
+    f2 = sound.getFrequencyFromNote(2,"D")
+    print(f2)
 
     sound.generateChords("C3","F3","G3")
     
