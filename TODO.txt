@@ -65,9 +65,9 @@ Objectifs de l'application
 ==========================
 
 Developper une application interactive pour :
-  - creer des sons
-  - les visualiser sous forme d'onde
-  - jouer les sons (notes) sur un clavier de piano sur 1 puis 2 octaves puis 3 ...
+  - creer des sons                                                                                                                      DONE
+  - les visualiser sous forme d'onde                                                                                                    DONE
+  - jouer les sons (notes) sur un clavier de piano sur 1 puis 2 octaves puis 3 ...                                                      DONE
   - apprendre a reconnaitre les notes au piano (afficher le nom des notes,visualiser la touche correspondante)
   - creer des accords majeurs (tonalite-tierce-quinte, ex : C-E-G) a partir des notes 
   - jouer les accords sur un clavier de piano sur 1 puis 2 octaves puis 3 ...
@@ -79,7 +79,7 @@ Pour aller plus loin :
 Etapes à suivre 
 ===============
 
-1) Proposer et implementer une IHM pour creer des sons (notes pures puis harmoniques) au format wav.
+1) Proposer et implementer une IHM pour creer des sons (notes pures puis harmoniques) au format wav.      
 
 2) Proposer et implementer une IHM pour visualiser un son pur puis un son (une note) avec ses harmoniques.
 

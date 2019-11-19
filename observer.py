@@ -4,7 +4,7 @@ class Subject(object):
     def notify(self):
         print("Subject.notify()")
         for obs in self.observers:
-            obs.update()
+            obs.update(self)
     def attach(self, obs):
         if not hasattr(obs,"update"):
             raise ValueError("Observer must have an update() method")

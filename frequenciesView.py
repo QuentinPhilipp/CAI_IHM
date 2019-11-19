@@ -1,8 +1,5 @@
 from math import sin,pi
 import time
-
-from frequenciesController import *
-from frequenciesModel import *
 from observer import *
 ## from pylab import linspace,sin
 
@@ -47,6 +44,7 @@ class FreqView(Observer):
 
     def update(self,subject=None):
         print("View : update()")
+        print(subject)
         if subject.get_name() not in self.signals.keys():
             self.signals[subject.get_name()]=subject.get_signal()
         else :
@@ -81,6 +79,118 @@ class FreqView(Observer):
             self.canvas.create_line(self.width/2-10,y,self.width/2+10,y,width=3,tags="grid")
     
 
+
+
+class FreqModel(Subject):
+    def __init__(self,name="signal"):
+        Subject.__init__(self)
+        self.name = name
+        self.signal = []
+        self.a,self.f,self.p=1.0,2.0,0.0
+        self.h=1
+
+    def vibration(self,t,harmoniques=1,impair=True):
+        a,f,p=self.a,self.f,self.p
+        somme=0
+        if(self.h!=1):
+            print("Harmoniques")
+            harmoniques=self.h
+        for h in range(1,harmoniques+1) :
+            somme=somme + (a/h)*sin(2*pi*(f*h)*t-p)
+        return somme
+    
+    def generate_signal(self,period=2.0,samples=10000):
+        print(self.name)
+        del self.signal[0:]
+        echantillons=range(int(samples)+1)
+        Tech = period/samples
+        print("Amplitude :",self.a)
+        print("Frequency :",self.f)
+        print("Dephasage :",self.p)
+        print("Harmoniques :",self.h)
+        for t in echantillons :
+            self.signal.append([t*Tech,self.vibration(t*Tech)])
+        self.notify()
+        return self.signal
+
+    def get_name(self):
+        return self.name
+    
+    def get_signal(self):
+        return self.signal
+
+    def setMagnitude(self,magnitude):
+        print("Change magnitude to ",magnitude)
+        self.a = magnitude
+
+    def setFrequency(self,frequency):
+        print("Change frequency to ",frequency)
+        self.f = frequency/100.0
+
+    def setDephasage(self,dephasage):
+        print("Change dephasage to ",dephasage)
+        self.p = dephasage
+
+    def setHarmonic(self,harmonic):
+        print("Change harmonic to ",harmonic)
+        self.h = harmonic
+
+
+class FreqController():
+    def __init__(self,parent,model,view):
+        print("Initializing Controller")
+        self.model = model
+        self.view=view
+        self.create_controls(parent)
+
+    def create_controls(self,parent):
+        print("Creating control")
+        self.frame = tk.LabelFrame(parent,text="Signal")
+        self.amp = tk.IntVar()
+        self.harm = tk.IntVar()
+        self.freq = tk.IntVar()
+        self.dephas = tk.DoubleVar()
+        self.amp.set(1)
+        self.harm.set(1)
+        self.freq.set(100)
+        self.dephas.set(0.0)
+
+        self.scaleA=tk.Scale(self.frame,variable=self.amp,label="Amplitude",orient="horizontal",length=250,from_=0,to=5,tickinterval=1)
+        self.scaleA.bind("<ButtonRelease-1>",self.update_magnitude)
+        self.scaleA.pack()
+        
+        self.scaleB=tk.Scale(self.frame,variable=self.freq,label="Frequency",orient="horizontal",resolution=10,length=250,from_=0,to=5000,tickinterval=1000)
+        self.scaleB.bind("<ButtonRelease-1>",self.update_frequency)
+        self.scaleB.pack()
+
+        self.scaleC=tk.Scale(self.frame,variable=self.dephas,label="Dephasage",resolution=0.5,orient="horizontal",length=250,from_=0,to=5,tickinterval=1)
+        self.scaleC.bind("<ButtonRelease-1>",self.update_dephasage)
+        self.scaleC.pack()
+
+        self.scaleD=tk.Scale(self.frame,variable=self.harm,label="Harmoniques",resolution=1,orient="horizontal",length=250,from_=0,to=6,tickinterval=1)
+        self.scaleD.bind("<ButtonRelease-1>",self.update_harmonic)
+        self.scaleD.pack()
+
+
+    def update_magnitude(self,event):
+        self.model.setMagnitude(self.amp.get())
+        self.model.generate_signal()
+        
+    def update_frequency(self,event):
+        self.model.setFrequency(self.freq.get())
+        self.model.generate_signal()
+
+    def update_dephasage(self,event):
+        self.model.setDephasage(self.dephas.get())
+        self.model.generate_signal()
+
+    def update_harmonic(self,event):
+        self.model.setHarmonic(self.harm.get())
+        self.model.generate_signal()
+
+
+    def packing(self):
+        self.frame.pack()
 
 if  __name__ == "__main__" :
     root=tk.Tk()
