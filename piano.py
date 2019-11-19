@@ -39,7 +39,11 @@ class MainView(Observer):
         # self.frameParameter = tk.LabelFrame(self.frameGeneration,labelanchor='n',text="Parametres",padx=15,pady=10)
 
         self.piano = PianoView(self.framePiano,self.octaves)
-
+        self.soundGeneratorModel = SoundGeneratorModel()
+        self.soundGeneratorView = SoundGeneratorView(self.frameGenerator,self.soundGeneratorModel)
+        self.soundGeneratorController=SoundGeneratorController(self.soundGeneratorView.topFrame,self.soundGeneratorModel,self.soundGeneratorView)
+        self.soundGeneratorView.packing()
+        self.soundGeneratorController.packing()
 
 
     def packing(self):
