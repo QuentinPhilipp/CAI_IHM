@@ -2,8 +2,7 @@
 # https://stackoverflow.com/questions/34522095/gui-button-hold-down-tkinter
 
 import sys
-from frequenciesView import *
-from frequenciesModel import *
+from frequencies_V import *
 import sqlite3
 conn = sqlite3.connect('frequencies.db')
 c = conn.cursor()
@@ -13,6 +12,7 @@ print(sys.version)
 from tkinter import Tk,Frame,Button,Label
 
 import collections
+
 
 from observer  import *
 
@@ -82,8 +82,8 @@ class Screen(Observer):
         print("frequency : ",goodFrequency)
 
 
-        modelFreq.setFrequency(goodFrequency)
-        modelFreq.generate_signal()
+        graph.setFrequency(goodFrequency)
+        graph.update()
         
         if self.info :
             self.info.config(text = "Vous avez joue la note : " + key + str(model.get_degree()))
@@ -149,16 +149,10 @@ if __name__ == "__main__" :
     root = Tk()
     root.geometry("1400x300")
     octaves=5
-    modelFreq=FreqModel()
-    print(modelFreq.name)
-    modelFreq.generate_signal()
     root.title("La leçon de piano à "+ str(octaves) + " octaves")
-    graph=FreqView(root)
+    graph=View(root)
     graph.grid(4)
-    modelFreq.attach(graph)
-
-    graph.update(modelFreq)
-
+    graph.update()
     piano=Piano(root,octaves)
     # mainWindow = MainWindow(root,octaves)
     piano.packing()

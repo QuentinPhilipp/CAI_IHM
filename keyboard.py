@@ -101,7 +101,7 @@ class PianoView(Observer) :
         self.parent=parent
         self.octaves=[]
         self.frame=tk.Frame(self.parent,bg="yellow")
-        self.parent.minsize(1400, 250)
+       
         for octave in range(octaves) :
             self.create_octave(self.frame,octave+1)
     def create_octave(self,parent,degree=3) :
@@ -120,6 +120,7 @@ class PianoView(Observer) :
 
 if __name__ == "__main__" :
     root = tk.Tk()
+    root.minsize(1400, 250)
     octaves=5
     root.title("La leçon de piano à "+ str(octaves) + " octaves")
     view = PianoView(root,octaves)
