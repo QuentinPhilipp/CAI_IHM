@@ -21,11 +21,13 @@ else :
 class FreqView(Observer):
     def __init__(self,parent,bg="white",width=600,height=300):
         Observer.__init__(self)
-        self.canvas=tk.Canvas(parent,bg=bg,width=width,height=height)
+        self.parent = parent
+        self.canvas=tk.Canvas(self.parent,width=width,height=height)
         self.units=1
         self.signals={}
         self.width,self.height=width,height
         self.canvas.bind("<Configure>",self.resize)
+        self.canvas.config(background="White")
         
 
     def resize(self,event):
@@ -78,8 +80,6 @@ class FreqView(Observer):
             self.canvas.create_line(0,y,self.width,y,tags="grid")
             self.canvas.create_line(self.width/2-10,y,self.width/2+10,y,width=3,tags="grid")
     
-
-
 
 class FreqModel(Subject):
     def __init__(self,name="signal"):
@@ -191,6 +191,14 @@ class FreqController():
 
     def packing(self):
         self.frame.pack()
+
+
+# class VisualizerView():
+#     def __init__(self,parent,model):
+#         self.model = model
+#         self.parent = parent
+
+
 
 if  __name__ == "__main__" :
     root=tk.Tk()

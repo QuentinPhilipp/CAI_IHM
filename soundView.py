@@ -2,6 +2,7 @@ from observer import *
 
 import sys
 import os
+import subprocess
 import wave, struct, math, random
 from wav_audio import *
 import sqlite3
@@ -30,13 +31,16 @@ class SoundGeneratorView(Observer):
         self.model = model
         self.ctrl=None
         self.path="./GeneratedSounds"
-        self.topFrame=tk.Frame(self.parent)
-        self.bottomFrame=tk.Frame(self.parent)
-        self.createFileList(self.bottomFrame)
+        self.topFrame=tk.LabelFrame(self.parent,labelanchor='n',text="Creation")
+        self.bottomFrame=tk.LabelFrame(self.parent,labelanchor='n',text="Notes générées")
+        self.bottomListFrame=tk.Frame(self.bottomFrame)
+        self.createFileList(self.bottomListFrame)
+        self.createPlayButton(self.bottomFrame)
     
 
     def createFileList(self,frame):
         self.filesListBox = tk.Listbox(frame,bg='white')
+        self.filesListBox.bind("<ButtonRelease-1>",self.checkFileList)
 
         for root, dirs, files in os.walk(self.path):
             for filename in files:
@@ -50,10 +54,40 @@ class SoundGeneratorView(Observer):
         self.filesListBox.config(yscrollcommand=self.scrollbarDirectory.set)
         self.scrollbarDirectory.config(command=self.filesListBox.yview)
 
-    def packing(self):
-        self.topFrame.pack()
-        self.bottomFrame.pack(side=tk.TOP)
-        self.filesListBox.pack()
+    def createPlayButton(self,frame):
+        self.playButton = tk.Button(frame,text="Play",state='disable',width=20,command=self.playSound)
+
+    def checkFileList(self,event=None):
+        selectedFile = self.filesListBox.curselection()
+        if not selectedFile:
+            print("No file selected")
+            self.playButton["state"]="disabled"
+        else :
+            print("File selected")
+            self.playButton["state"]="normal"
+
+    def packing(self,mainFrame=True):
+        if not mainFrame :
+            self.topFrame.pack()
+            self.bottomFrame.pack(side=tk.BOTTOM)
+            self.bottomListFrame.pack(side=tk.LEFT)
+            self.filesListBox.pack()
+            self.playButton.pack(side=tk.LEFT,padx=15)
+        else :
+            # Placer la bottom frame sur la gauche pour gagner de la hauteur dans le programme piano.py
+            self.topFrame.pack(side=tk.LEFT,fill=tk.Y)
+            self.bottomFrame.pack(side=tk.LEFT,padx=15,fill=tk.Y)
+            self.bottomListFrame.pack(side=tk.TOP)
+            self.playButton.pack(side=tk.BOTTOM,pady=15)
+            self.filesListBox.pack()
+
+    def playSound(self):
+        dir = self.filesListBox.get(self.filesListBox.curselection())
+        self.filesListBox.select_clear(0,tk.END)
+        self.playButton["state"]="disable"
+        print("Playing : ",self.path+"/"+dir)
+        path=self.path+"/"+dir
+        subprocess.call(["aplay", path])
 
     def update(self,subject=None):
         self.filesListBox.delete(0,tk.END)
@@ -81,7 +115,7 @@ class SoundGeneratorController():
         self.frameAccord = tk.LabelFrame(self.parent,labelanchor='n',text="Creation d'accord")
         self.frameGeneration = tk.Frame(self.parent,bd =3)
         self.frameParameter = tk.LabelFrame(self.frameGeneration,labelanchor='n',text="Parametres",padx=15,pady=10)
-        self.radioButtonFrame = tk.Frame(self.frameGeneration,bg="red")
+        self.radioButtonFrame = tk.Frame(self.frameGeneration)
 
 
         self.createNoteList(self.frameNote)
@@ -166,17 +200,24 @@ class SoundGeneratorController():
         self.accordButton = tk.Button(frame,text="Générer un accord",state='disable',width=20,command=self.generateSoundsChords)
 
     def createMajorMinorButton(self,frame):
-        valeurs = ['Major', 'Minor']
-        etiquettes = ['Accord Majeur', 'Accord Mineur']
+        valeurs = ['Major', 'Minor','Free']
+        etiquettes = ['Accord Majeur', 'Accord Mineur','Accord Libre']
         self.majorMinorVar = tk.StringVar()
         self.majorMinorVar.set(valeurs[0])
         self.model.setMajor()
         self.updateNotesList()
+
+        b= tk.Radiobutton(self.radioButtonFrame, variable=self.majorMinorVar, text=etiquettes[0], value=valeurs[0])
+        b.bind("<ButtonRelease-1>",self.adaptNoteAvailable)
+        b.grid(row=0,column=0)
         
-        for i in range(2):
-            b= tk.Radiobutton(self.radioButtonFrame, variable=self.majorMinorVar, text=etiquettes[i], value=valeurs[i])
-            b.bind("<ButtonRelease-1>",self.adaptNoteAvailable)
-            b.pack(side='left', expand=1)
+        b= tk.Radiobutton(self.radioButtonFrame, variable=self.majorMinorVar, text=etiquettes[1], value=valeurs[1])
+        b.bind("<ButtonRelease-1>",self.adaptNoteAvailable)
+        b.grid(row=0,column=1)
+        
+        b= tk.Radiobutton(self.radioButtonFrame, variable=self.majorMinorVar, text=etiquettes[2], value=valeurs[2])
+        b.bind("<ButtonRelease-1>",self.adaptNoteAvailable)
+        b.grid(row=1,column=0,columnspan=2)
 
     
     def adaptNoteAvailable(self,event=None):
@@ -186,9 +227,13 @@ class SoundGeneratorController():
             print("Major Chords selected")
             self.model.setMajor()
             self.updateNotesList()
-        else:
+        elif (self.majorMinorVar.get()=="Minor"):
             print("Minor Chords selected")
             self.model.setMinor()
+            self.updateNotesList()
+        else :
+            print("Free Chords selected")
+            self.model.setFree()
             self.updateNotesList()
 
 
@@ -292,8 +337,7 @@ class SoundGeneratorController():
 
 
     def generateSoundsChords(self):
-        # self.model.generateChords()
-        print("Generation accord")
+        self.model.generateChords(self.model.noteListChord[0],self.model.noteListChord[1],self.model.noteListChord[2],self.model.major,self.model.minor,self.completePath)
         self.accordList.select_clear(0,tk.END)
         self.model.resetSelection()
         # self.accordListChosen.select_clear(0,tk.END)
@@ -334,6 +378,7 @@ class SoundGeneratorModel(Subject):
         self.notes = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
         self.currentNotes = self.getAllNotes()
         self.major=True
+        self.minor=False
         self.noteListChord=[]
 
 
@@ -362,17 +407,20 @@ class SoundGeneratorModel(Subject):
 
 
     def setMajor(self):
-        self.currentNotes=[]
         self.major=True
-        notes = ["C","D","E","F","G","A","B"]
-        for octave in self.octaves:
-            for note in notes:
-                s = note + octave
-                self.currentNotes.append(s)
+        self.minor=False
+        self.currentNotes=self.getAllNotes()
         self.notify()
     
     def setMinor(self):
         self.major=False
+        self.minor=True
+        self.currentNotes=self.getAllNotes()
+        self.notify()
+    
+    def setFree(self):
+        self.major=False
+        self.minor=False
         self.currentNotes=self.getAllNotes()
         self.notify()
 
@@ -381,6 +429,9 @@ class SoundGeneratorModel(Subject):
 
     def checkAccord(self,notes):
         print("Checking chord")
+
+        print(self.major)
+        print(self.minor)
 
         previousLen=len(self.noteListChord)
 
@@ -400,9 +451,10 @@ class SoundGeneratorModel(Subject):
         if(self.noteListChord==[]):
             if(self.major):
                 self.setMajor()
-            else : 
+            elif(self.minor): 
                 self.setMinor()
-
+            else :
+                self.setFree()
         
         print(self.noteListChord)
 
@@ -410,14 +462,18 @@ class SoundGeneratorModel(Subject):
             currentNoteList=self.getCurrentNotes()
             indexNote0 = currentNoteList.index(self.noteListChord[0])
             authNoteList = []
-            authNoteList.append(currentNoteList[indexNote0])
-            authNoteList.append(currentNoteList[indexNote0+2])
-            authNoteList.append(currentNoteList[indexNote0+4])
+            if (self.major):
+                authNoteList.append(currentNoteList[indexNote0])
+                authNoteList.append(currentNoteList[indexNote0+4])
+                authNoteList.append(currentNoteList[indexNote0+7])
+            elif(self.minor) :
+                authNoteList.append(currentNoteList[indexNote0])
+                authNoteList.append(currentNoteList[indexNote0+3])
+                authNoteList.append(currentNoteList[indexNote0+7])
+            else:
+                authNoteList=self.getAllNotes()
 
             self.forceNote(authNoteList)
-
-
-
 
 
     def getFrequencyFromNote(self,octave,note):    
@@ -472,13 +528,24 @@ class SoundGeneratorModel(Subject):
         self.notify()
 
 
-    def generateChords(self,note1,note2,note3):
+    def generateChords(self,note1,note2,note3,major,minor,destFolder):
         print("Generate Sounds")
-        sound=wave.open('GeneratedSounds/CMajor2.wav','w')
-        folder = "Sounds/"
-        note1=folder+str(note1)+'.wav'
-        note2=folder+str(note2)+'.wav'
-        note3=folder+str(note3)+'.wav'
+        print("Note 1 :",note1)
+        print("Note 2 :",note2)
+        print("Note 3 :",note3)
+        if major :
+            fileName = destFolder+"/"+note1+"Major.wav"
+        elif minor :
+            fileName = destFolder+"/"+note1+"Minor.wav"
+        else :
+            fileName = destFolder+"/"+note1+"Free.wav"
+
+        print("Name:",fileName)
+        sound=wave.open(fileName,'w')
+        origFolder = "Sounds/"
+        note1=origFolder+str(note1)+'.wav'
+        note2=origFolder+str(note2)+'.wav'
+        note3=origFolder+str(note3)+'.wav'
         data1,framerate1 = open_wav(note1)
         data2,framerate2 = open_wav(note2)
         data3,framerate3 = open_wav(note3)
@@ -496,10 +563,9 @@ class SoundGeneratorModel(Subject):
         data = [] # liste des échantillons de l'accord
 
         for i in range(len(data1)):
-            data.append((data1[i]+data2[i]+data3[i])/3.0) # calcul de la moyenne de chacun des échantillons de même index issus des trois listes   
-            sound.writeframes(wave.struct.pack('B',128+int((data1[i]+data2[i]+data3[i])/3.0)))
-       
-        save_wav('GeneratedSounds/CMajor.wav',data,framerate1)
+            data.append((1/3)*(data1[i]+data2[i]+data3[i])) # calcul de la moyenne de chacun des échantillons de même index issus des trois listes   
+      
+        save_wav(fileName,data,framerate1)
         
         sound.close()
         self.notify()

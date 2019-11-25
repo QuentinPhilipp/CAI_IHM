@@ -17,6 +17,7 @@ elif sys.version_info.major == 3 and sys.version_info.minor == 6 :
     print(sys.version)
     import tkinter as tk
     from tkinter import filedialog
+    from tkinter import messagebox
 else :
     print("Your python version is : ")
     print(sys.version_info.major,sys.version_info.minor)
@@ -29,31 +30,101 @@ class MainView(Observer):
         Observer.__init__(self)
         self.parent = parent
         self.parent.minsize(width, height)
-        self.octaves=4
+        self.octaves=5
+        self.generatorTopLevel = None
 
 
-        self.frameGenerator = tk.LabelFrame(self.parent,labelanchor='n',text="Generateur de notes",height=100,width=100,bg="blue")
-        self.framePiano = tk.LabelFrame(self.parent,labelanchor='n',text="Piano",height=100,width=100,bg="yellow")
-        self.frameVisualizer = tk.Frame(self.parent,height=100,width=100,bg='red')
+        self.frameGenerator = tk.LabelFrame(self.parent,labelanchor='n',text="Generateur de notes",height=100,width=100)
+        self.framePiano = tk.LabelFrame(self.parent,labelanchor='n',text="Piano",height=100,width=100)
+        self.frameVisualizer = tk.Frame(self.parent,height=100,width=100)
 
         # self.frameParameter = tk.LabelFrame(self.frameGeneration,labelanchor='n',text="Parametres",padx=15,pady=10)
 
-        self.piano = PianoView(self.framePiano,self.octaves)
+        # SoundGenerator
         self.soundGeneratorModel = SoundGeneratorModel()
         self.soundGeneratorView = SoundGeneratorView(self.frameGenerator,self.soundGeneratorModel)
         self.soundGeneratorController=SoundGeneratorController(self.soundGeneratorView.topFrame,self.soundGeneratorModel,self.soundGeneratorView)
-        self.soundGeneratorView.packing()
+        self.soundGeneratorView.packing(mainFrame=True)
         self.soundGeneratorController.packing()
+        self.soundGeneratorModel.attach(self.soundGeneratorView)
 
+
+        # FrequenciesVisualizer
+        self.visualizerModel = FreqModel()
+        self.visualizerView = FreqView(self.frameVisualizer,width=1200)
+        self.visualizerView.grid(8)
+        self.visualizerView.packing()
+        self.visualizerModel.attach(self.visualizerView)
+
+
+        # Piano
+        self.piano = PianoView(self.framePiano,self.octaves,self.visualizerModel)
+
+        self.createMenuBar(self.parent)
+
+
+    def createMenuBar(self,frame):
+        self.menubar = tk.Menu(root)
+        filemenu = tk.Menu(self.menubar, tearoff=0)
+        filemenu.add_command(label="Open SoundGenerator alone", command=self.startGenerator)
+        filemenu.add_command(label="Open SoundVisualizer alone", command=self.startVisualizer)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=self.dispExitPrev)
+        self.menubar.add_cascade(label="File", menu=filemenu)
+
+        helpmenu = tk.Menu(self.menubar, tearoff=0)
+        helpmenu.add_command(label="Developer", command=self.dispCredential)
+        self.menubar.add_cascade(label="About", menu=helpmenu)
+
+
+    def donothing(self):
+        print("Do Nothing")
+
+
+    def dispCredential(self):
+        messagebox.showinfo("Developer","Developed by Quentin  Philipp")
+
+    def dispExitPrev(self):
+        answer = messagebox.askyesno("Leave ?", "Voulez vous vraiment quitter ?", icon='warning')
+        print("exit :",answer)
+        if answer==True :
+            root.quit()
+
+    def startGenerator(self):
+        if self.generatorTopLevel==None:
+            self.generatorTopLevel = tk.Toplevel()      #frame
+            self.generatorTopLevel.minsize(1000,410)
+            self.generatorTopLevel.resizable(False, False)
+
+            self.soundGeneratorModelTopLevel = SoundGeneratorModel()
+            self.soundGeneratorViewTopLevel = SoundGeneratorView(self.generatorTopLevel,self.soundGeneratorModelTopLevel)
+            self.soundGeneratorControllerTopLevel=SoundGeneratorController(self.soundGeneratorViewTopLevel.topFrame,self.soundGeneratorModelTopLevel,self.soundGeneratorViewTopLevel)
+            self.soundGeneratorViewTopLevel.packing(mainFrame=True)
+            self.soundGeneratorControllerTopLevel.packing()
+            self.soundGeneratorModelTopLevel.attach(self.soundGeneratorViewTopLevel)
+            self.soundGeneratorModelTopLevel.attach(self.soundGeneratorView)
+        else :
+            messagebox.showinfo("Impossible","Le générateur de sons est déjà lancé")
+
+    def startVisualizer(self):
+        self.visualizerTopLevel = tk.Toplevel()     #frame
+
+        self.visualizerModelTopLevel = FreqModel()
+        self.visualizerViewTopLevel = FreqView(self.visualizerTopLevel)
+        self.visualizerViewTopLevel.grid(8)
+        self.visualizerViewTopLevel.packing()
+        self.visualizerModelTopLevel.generate_signal()
+        self.visualizerModelTopLevel.attach(self.visualizerViewTopLevel)
+        self.visualizerControlerTopLevel = FreqController(self.visualizerTopLevel,self.visualizerModelTopLevel,self.visualizerViewTopLevel)
+        self.visualizerControlerTopLevel.packing()
+        self.visualizerViewTopLevel.update(self.visualizerModelTopLevel)
 
     def packing(self):
         #Frames
+        root.config(menu=self.menubar)
         self.frameGenerator.pack()
         self.framePiano.pack()
         self.frameVisualizer.pack()
-
-
-
 
         #Piano 
         self.piano.packing()
