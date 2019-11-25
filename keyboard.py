@@ -148,7 +148,7 @@ class PianoView(Observer) :
         self.parent=parent
         self.octaves=[]
         self.octaveNumber = octaveNumber
-        self.frame=tk.Frame(self.parent,bg="yellow")
+        self.frame=tk.Frame(self.parent)
         self.noteVisibility = True
         self.visualizer=visualizer
        
@@ -187,7 +187,7 @@ class PianoView(Observer) :
         self.octaves = []
         self.frame.destroy()
         self.hideButton.pack_forget()
-        self.frame=tk.Frame(self.parent,bg="yellow")
+        self.frame=tk.Frame(self.parent)
 
         for octave in range(self.octaveNumber) :
             self.create_octave(self.frame,self.visualizer,octave+1)

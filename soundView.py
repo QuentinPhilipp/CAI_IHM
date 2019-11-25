@@ -250,8 +250,17 @@ class SoundGeneratorController():
     def updateNotesList(self):
         newNotes = self.model.getCurrentNotes()
         self.accordList.delete(0,tk.END)
-        for item in newNotes:
-            self.accordList.insert(tk.END,item)
+
+        #don't display all of the note, chords can't begin with the lasts notes
+
+        if len(newNotes)>5:        #Au moment de choisir la tonique
+            for i in range(len(newNotes)-7):
+                self.accordList.insert(tk.END,newNotes[i]) 
+       
+        else :                      #Si on est dans le cas où seulement 3 notes sont proposé pour finir l'accord
+            for item in newNotes:
+                self.accordList.insert(tk.END,item)
+
 
         #check selectedItem in Model
         selectedNotes = self.model.getNoteListChord()
@@ -541,34 +550,26 @@ class SoundGeneratorModel(Subject):
             fileName = destFolder+"/"+note1+"Free.wav"
 
         print("Name:",fileName)
-        sound=wave.open(fileName,'w')
+
         origFolder = "Sounds/"
         note1=origFolder+str(note1)+'.wav'
         note2=origFolder+str(note2)+'.wav'
         note3=origFolder+str(note3)+'.wav'
+
         data1,framerate1 = open_wav(note1)
         data2,framerate2 = open_wav(note2)
         data3,framerate3 = open_wav(note3)
-        duration =1000
-        sampling=44100
-
-        nb_channels = 2    # stéreo
-        nb_bytes = 1       # taille d'un échantillon : 1 octet = 8 bits
-        left_level = 1     # niveau canal de gauche (0 à 1) ? '))
-        right_level= 1    # niveau canal de droite (0 à 1) ? '))
-        nb_samples = int((duration/1000)*sampling)
-        params = (nb_channels,nb_bytes,sampling,nb_samples,'NONE','not compressed')
-        sound.setparams(params)    # création de l'en-tête (44 octets)
 
         data = [] # liste des échantillons de l'accord
 
         for i in range(len(data1)):
             data.append((1/3)*(data1[i]+data2[i]+data3[i])) # calcul de la moyenne de chacun des échantillons de même index issus des trois listes   
-      
+
         save_wav(fileName,data,framerate1)
-        
-        sound.close()
+
         self.notify()
+
+
 
 
 
@@ -583,8 +584,6 @@ if  __name__ == "__main__" :
     ctrl=SoundGeneratorController(view.topFrame,model,view)
     ctrl.packing()
     model.attach(view)
-
-
     # model.attach(view)
 
     # view.update(model)

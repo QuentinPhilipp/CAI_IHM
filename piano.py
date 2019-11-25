@@ -134,9 +134,7 @@ if __name__ == "__main__" :
     root.title("Projet Piano")
     view = MainView(root,1400,700)
     view.packing()
-    
-    
-    
+
     octaves=5
     # viewPiano = PianoView(root,octaves)
     # viewPiano.packing()
