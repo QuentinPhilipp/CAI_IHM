@@ -4,6 +4,7 @@ import sys
 import os
 import subprocess
 import wave, struct, math, random
+from threading import Thread
 from wav_audio import *
 import sqlite3
 conn = sqlite3.connect('frequencies.db')
@@ -36,30 +37,46 @@ class SoundGeneratorView(Observer):
         self.bottomListFrame=tk.Frame(self.bottomFrame)
         self.createFileList(self.bottomListFrame)
         self.createPlayButton(self.bottomFrame)
+        self.packing()
     
 
     def createFileList(self,frame):
         self.filesListBox = tk.Listbox(frame,bg='white')
         self.filesListBox.bind("<ButtonRelease-1>",self.checkFileList)
-
-        for root, dirs, files in os.walk(self.path):
-            for filename in files:
-                self.filesListBox.insert(tk.END,filename)
-            
-
+        self.filesListBox.pack(side=tk.LEFT)
+        
         self.scrollbarDirectory = tk.Scrollbar(frame)
-        self.scrollbarDirectory.pack(side=tk.RIGHT, fill=tk.Y)
+        self.scrollbarDirectory.pack(side=tk.LEFT, fill=tk.Y)
 
         # attach listbox to scrollbarDirectory
         self.filesListBox.config(yscrollcommand=self.scrollbarDirectory.set)
         self.scrollbarDirectory.config(command=self.filesListBox.yview)
+
+        self.filesListBoxChords = tk.Listbox(frame,bg='white')
+        self.filesListBoxChords.bind("<ButtonRelease-1>",self.checkFileList)
+        self.filesListBoxChords.pack(side=tk.LEFT)
+
+
+        self.scrollbarDirectoryChords = tk.Scrollbar(frame)
+        self.scrollbarDirectoryChords.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # attach listbox to scrollbarDirectory
+        self.filesListBoxChords.config(yscrollcommand=self.scrollbarDirectoryChords.set)
+        self.scrollbarDirectoryChords.config(command=self.filesListBoxChords.yview)
+
+        self.update()
+
+
+
+
 
     def createPlayButton(self,frame):
         self.playButton = tk.Button(frame,text="Play",state='disable',width=20,command=self.playSound)
 
     def checkFileList(self,event=None):
         selectedFile = self.filesListBox.curselection()
-        if not selectedFile:
+        selectedChords = self.filesListBoxChords.curselection()
+        if not selectedFile and not selectedChords:
             print("No file selected")
             self.playButton["state"]="disabled"
         else :
@@ -68,38 +85,67 @@ class SoundGeneratorView(Observer):
 
     def packing(self,mainFrame=True):
         if not mainFrame :
-            self.topFrame.pack()
-            self.bottomFrame.pack(side=tk.BOTTOM)
-            self.bottomListFrame.pack(side=tk.LEFT)
-            self.filesListBox.pack()
-            self.playButton.pack(side=tk.LEFT,padx=15)
+            self.topFrame.pack(side=tk.LEFT,fill=tk.Y)
+            self.bottomFrame.pack(side=tk.LEFT,padx=15,fill=tk.Y)
+            self.bottomListFrame.pack(side=tk.TOP)
+            self.playButton.pack(side=tk.BOTTOM,pady=15)
         else :
             # Placer la bottom frame sur la gauche pour gagner de la hauteur dans le programme piano.py
             self.topFrame.pack(side=tk.LEFT,fill=tk.Y)
             self.bottomFrame.pack(side=tk.LEFT,padx=15,fill=tk.Y)
             self.bottomListFrame.pack(side=tk.TOP)
             self.playButton.pack(side=tk.BOTTOM,pady=15)
-            self.filesListBox.pack()
 
     def playSound(self):
-        dir = self.filesListBox.get(self.filesListBox.curselection())
+        selectedFile = self.filesListBox.curselection()
+        selectedChords = self.filesListBoxChords.curselection()
+
+        if not selectedFile:
+            dir = self.filesListBoxChords.get(selectedChords)
+        else :
+            dir = self.filesListBox.get(selectedFile)
+
         self.filesListBox.select_clear(0,tk.END)
+        self.filesListBoxChords.select_clear(0,tk.END)
         self.playButton["state"]="disable"
         print("Playing : ",self.path+"/"+dir)
         path=self.path+"/"+dir
-        subprocess.call(["aplay", path])
+        soundPlayer = SoundPlayer(path,self.model.piano)       #In a thread to not stop the execution
+        soundPlayer.start()
+        self.model.colorPiano(dir)             #Couleur sur le piano
+
 
     def update(self,subject=None):
         self.filesListBox.delete(0,tk.END)
+        self.filesListBoxChords.delete(0,tk.END)
+
 
         for root, dirs, files in os.walk(self.path):
             for filename in files:
-                self.filesListBox.insert(tk.END,filename)
+                print(filename)
+                if(".wav" in filename):                                                             #Display only .wav files
+                    if(("Free" in filename)or ("Major" in filename) or ("Minor" in filename)):      #Si c'est un accord
+                        self.filesListBoxChords.insert(tk.END,filename)
+                    else :      
+                        self.filesListBox.insert(tk.END,filename)
 
-        self.packing()
+        
 
+class SoundPlayer(Thread):
+    def __init__(self,file,piano):
+        Thread.__init__(self)
+        self.file = file
+        self.piano = piano
 
-
+    def run(self):
+        subprocess.call(["aplay",self.file])        #In a thread to not stop the execution
+        if self.piano!=None:
+            for keyb in self.piano.controls:
+                for elem in keyb.buttons:
+                    if elem[0].endswith("#"):
+                        elem[1].config(bg="black")
+                    else :
+                        elem[1].config(bg="white")
 
 class SoundGeneratorController():
     def __init__(self,parent,model,view,bg="white",width=715,height=390):
@@ -150,8 +196,9 @@ class SoundGeneratorController():
         self.octaveListBox.grid(row=1,column=1)
 
         # Accords
-        self.accordLabel.grid(row=0,column=0)
-        self.accordList.grid(row=1,column=0)
+        self.accordLabel.pack()
+        self.accordList.pack(side=tk.LEFT)
+        self.scrollbarAccord.pack(side=tk.LEFT, fill=tk.Y)
 
         # Generation
         self.noteWarning.grid(row=0,column=0)
@@ -187,6 +234,13 @@ class SoundGeneratorController():
         self.accordLabel= tk.Label(frame,text="Notes")
         self.accordList = tk.Listbox(frame,selectmode='multiple',exportselection=0)
         self.accordList.bind("<ButtonRelease-1>",self.checkAccordList)
+
+
+        self.scrollbarAccord = tk.Scrollbar(frame)
+        # attach accordList to scrollbarDirectory
+        self.accordList.config(yscrollcommand=self.scrollbarAccord.set)
+        self.scrollbarAccord.config(command=self.accordList.yview)
+
 
         self.updateNotesList()
 
@@ -381,8 +435,10 @@ class SoundGeneratorController():
 
 
 class SoundGeneratorModel(Subject):
-    def __init__(self):
+    def __init__(self,piano=None):
         Subject.__init__(self)
+
+        self.piano=piano
         self.octaves = ["1","2","3","4","5"]
         self.notes = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
         self.currentNotes = self.getAllNotes()
@@ -570,14 +626,112 @@ class SoundGeneratorModel(Subject):
         self.notify()
 
 
+    def colorPiano(self,note):
+        if self.piano!=None:
+            #Extract octave and note
+            #remove .wav
+            note=note[:-4]
+            if note[-1:] in ["1","2","3","4","5"]:          #only display note, not chords
+                oct=int(note[-1:])
+                #remove octave from note string
+                note=note[:-1]
+                keyb = self.piano.controls[oct-1]
+                for elem in keyb.buttons:
+                    if elem[0]==note:
+                        elem[1].config(bg="coral")
+
+            else :
+                octaves = ["1","2","3","4","5"]
+                notes = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
+                noteList = []
+                for o in octaves:
+                    for n in notes:
+                        noteList.append(n+o)
+
+                print(noteList)
+                major=False
+                free=False
+                if "Free" in note:
+                    #Accord libre, on ne peux pas afficher les notes
+                    free=True
+                elif "Major" in note:
+                    major=True
+
+                if not free:
+                    firstNote = note[:-5]
+                    
+                    if(major):
+                        #Si l'accord est majeur
+                        print('Major :',firstNote)
+                        indexInNoteList = noteList.index(firstNote)
+
+                        note1=firstNote
+                        note2=noteList[indexInNoteList+4]
+                        note3=noteList[indexInNoteList+7]
+                        oct1 =int(note1[-1:])
+                        oct2 =int(note2[-1:])
+                        oct3 =int(note3[-1:])
+                        note1=note1[:-1]
+                        note2=note2[:-1]
+                        note3=note3[:-1]
+                        
+
+                        keyb = self.piano.controls[oct1-1]
+                        for elem in keyb.buttons:
+                            print(elem)
+                            if elem[0]==note1:
+                                elem[1].config(bg="coral")
+                        
+                        keyb = self.piano.controls[oct2-1]
+                        for elem in keyb.buttons:
+                            if elem[0]==note2:
+                                elem[1].config(bg="coral")
+
+                        keyb = self.piano.controls[oct3-1]
+                        for elem in keyb.buttons:
+                            if elem[0]==note3:
+                                elem[1].config(bg="coral")
 
 
+                    elif (not major):
+                        #Si l'accord est mineur
+                        print('Minor :',firstNote)
 
+                        indexInNoteList = noteList.index(firstNote)
+
+                        note1=firstNote
+                        note2=noteList[indexInNoteList+3]
+                        note3=noteList[indexInNoteList+7]
+                        oct1 =int(note1[-1:])
+                        oct2 =int(note2[-1:])
+                        oct3 =int(note3[-1:])
+                        note1=note1[:-1]
+                        note2=note2[:-1]
+                        note3=note3[:-1]
+                        
+
+                        keyb = self.piano.controls[oct1-1]
+                        for elem in keyb.buttons:
+                            print(elem)
+                            if elem[0]==note1:
+                                elem[1].config(bg="coral")
+                        
+                        keyb = self.piano.controls[oct2-1]
+                        for elem in keyb.buttons:
+                            if elem[0]==note2:
+                                elem[1].config(bg="coral")
+
+                        keyb = self.piano.controls[oct3-1]
+                        for elem in keyb.buttons:
+                            if elem[0]==note3:
+                                elem[1].config(bg="coral")
+
+                                
 
 if  __name__ == "__main__" :
     root=tk.Tk()
     root.title("Vue Creation Note")
-    root.minsize(715, 500)
+    root.minsize(1170, 420)
     model=SoundGeneratorModel()
     view=SoundGeneratorView(root,model)
     view.packing()

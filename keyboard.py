@@ -1,6 +1,7 @@
 from observer import *
 import collections
 import subprocess
+from threading import Thread
 import sqlite3
 conn = sqlite3.connect('frequencies.db')
 c = conn.cursor()
@@ -60,13 +61,23 @@ class KeyboardView(Observer):
             if key not in model.gamme.keys()  :
                 raise AssertionError
 
-        subprocess.call(["aplay", model.get_gamme()[key]])
+        soundPlayer = SoundPlayer(model.get_gamme()[key])       #In a thread to not stop the execution
+        soundPlayer.start()
+
         if(self.visualizer!=None):   #Si on a ajouté un visualiseur de signal, le notifier
             freq = self.getFrequencyFromNote(model.get_degree(),key)
             self.visualizer.setFrequency(freq)
             self.visualizer.setMagnitude(3)
             self.visualizer.generate_signal()
 
+
+class SoundPlayer(Thread):
+    def __init__(self,file):
+        Thread.__init__(self)
+        self.file = file
+
+    def run(self):
+        subprocess.call(["aplay",self.file])        #In a thread to not stop the execution
 
 class KeyboardModel(Subject) :
     def __init__(self,degree=3) :
@@ -105,26 +116,28 @@ class Keyboard :
 
         self.create_keyboard()
 
-
     def create_keyboard(self) :
         key_w,key_h=40,150
         dx_white,dx_black=0,0
         self.keyboard=tk.Frame(self.parent,width=7*key_w,height=key_h)
+        self.buttons= []
         for key in self.model.gamme.keys() :
             if  key.startswith( '#', 1, len(key) ) :
                 delta_w,delta_h=3/4.,2/3.
                 delta_x=3/5.
-                button=tk.Button(self.keyboard,name=key.lower(),width=3,height=6, bg = "black",text=key,anchor="s",fg=self.blackButtonFg,activeforeground=self.activeforeground,activebackground="grey90")
+                button=tk.Button(self.keyboard,name=key.lower(),width=3,height=6, bg = "black",text=key,anchor="s",fg=self.blackButtonFg,activeforeground=self.blackButtonFg,activebackground="black")
                 button.bind("<Button-1>",lambda event,x = key : self.play_note(x))
                 button.place(width=key_w*delta_w,height=key_h*delta_h,x=key_w*delta_x+key_w*dx_black,y=0)
+                self.buttons.append((key,button))
                 if key.startswith('D#', 0, len(key) ) :
                     dx_black=dx_black+2
                 else :
                     dx_black=dx_black+1
             else :
-                button=tk.Button(self.keyboard,name=key.lower(),bg = "white",text=key,anchor="s",fg=self.whiteButtonFg,activeforeground=self.activeforeground,activebackground="grey90")
+                button=tk.Button(self.keyboard,name=key.lower(),bg = "white",text=key,anchor="s",fg=self.whiteButtonFg,activeforeground=self.whiteButtonFg,activebackground="white")
                 button.bind("<Button-1>",lambda event,x = key : self.play_note(x))
                 button.place(width=key_w,height=key_h,x=key_w*dx_white,y=0)
+                self.buttons.append((key,button))
                 dx_white=dx_white+1
 
     def play_note(self,key) :
@@ -142,11 +155,15 @@ class Keyboard :
         self.whiteButtonFg="white"
         self.activeforeground="grey90"
 
+
+
+
 class PianoView(Observer) :
     def __init__(self,parent,octaveNumber,visualizer=None) :
         Observer.__init__(self)
         self.parent=parent
         self.octaves=[]
+        self.controls=[]
         self.octaveNumber = octaveNumber
         self.frame=tk.Frame(self.parent)
         self.noteVisibility = True
@@ -166,6 +183,7 @@ class PianoView(Observer) :
         model.attach(view)
         # view.get_screen().pack()
         control.get_keyboard().pack()
+        self.controls.append(control)
         frame.pack(side=tk.LEFT,expand=True)
     def packing(self) :
         self.frame.pack(side=tk.TOP)
@@ -193,7 +211,6 @@ class PianoView(Observer) :
             self.create_octave(self.frame,self.visualizer,octave+1)
 
         self.packing()
-
 
 if __name__ == "__main__" :
     root = tk.Tk()

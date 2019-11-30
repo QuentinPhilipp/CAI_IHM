@@ -66,10 +66,10 @@ Objectifs de l'application
 
 Developper une application interactive pour :
   - creer des sons                                                                                                                      DONE
-  - les visualiser sous forme d'onde                                                                                                    DONE
+  - les visualiser sous forme d'onde                                                                                                    
   - jouer les sons (notes) sur un clavier de piano sur 1 puis 2 octaves puis 3 ...                                                      DONE
-  - apprendre a reconnaitre les notes au piano (afficher le nom des notes,visualiser la touche correspondante)
-  - creer des accords majeurs (tonalite-tierce-quinte, ex : C-E-G) a partir des notes 
+  - apprendre a reconnaitre les notes au piano (afficher le nom des notes,visualiser la touche correspondante)                          DONE
+  - creer des accords majeurs (tonalite-tierce-quinte, ex : C-E-G) a partir des notes                                                   DONE
   - jouer les accords sur un clavier de piano sur 1 puis 2 octaves puis 3 ...
   - apprendre a reconnaitre les accords au piano (afficher le nom et les notes des accords,visualiser les touches correspondantes ...) 
 
@@ -79,11 +79,11 @@ Pour aller plus loin :
 Etapes à suivre 
 ===============
 
-1) Proposer et implementer une IHM pour creer des sons (notes pures puis harmoniques) au format wav.      
+1) Proposer et implementer une IHM pour creer des sons (notes pures puis harmoniques) au format wav.                                    DONE
 
-2) Proposer et implementer une IHM pour visualiser un son pur puis un son (une note) avec ses harmoniques.
+2) Proposer et implementer une IHM pour visualiser un son pur puis un son (une note) avec ses harmoniques.                              DONE
 
-3) Proposer et implementer une IHM pour jouer des notes sur un clavier de piano a 1 (puis 2 puis 3...) octave(s)
+3) Proposer et implementer une IHM pour jouer des notes sur un clavier de piano a 1 (puis 2 puis 3...) octave(s)                        DONE
 
 4) Enrichir l'IHM du piano pour :
      - apprendre a reconnaitre les notes sur le clavier

@@ -40,13 +40,7 @@ class MainView(Observer):
 
         # self.frameParameter = tk.LabelFrame(self.frameGeneration,labelanchor='n',text="Parametres",padx=15,pady=10)
 
-        # SoundGenerator
-        self.soundGeneratorModel = SoundGeneratorModel()
-        self.soundGeneratorView = SoundGeneratorView(self.frameGenerator,self.soundGeneratorModel)
-        self.soundGeneratorController=SoundGeneratorController(self.soundGeneratorView.topFrame,self.soundGeneratorModel,self.soundGeneratorView)
-        self.soundGeneratorView.packing(mainFrame=True)
-        self.soundGeneratorController.packing()
-        self.soundGeneratorModel.attach(self.soundGeneratorView)
+
 
 
         # FrequenciesVisualizer
@@ -60,10 +54,19 @@ class MainView(Observer):
         # Piano
         self.piano = PianoView(self.framePiano,self.octaves,self.visualizerModel)
 
-        self.createMenuBar(self.parent)
+
+        # SoundGenerator
+        self.soundGeneratorModel = SoundGeneratorModel(self.piano)
+        self.soundGeneratorView = SoundGeneratorView(self.frameGenerator,self.soundGeneratorModel)
+        self.soundGeneratorController=SoundGeneratorController(self.soundGeneratorView.topFrame,self.soundGeneratorModel,self.soundGeneratorView)
+        self.soundGeneratorView.packing(mainFrame=True)
+        self.soundGeneratorController.packing()
+        self.soundGeneratorModel.attach(self.soundGeneratorView)
+
+        self.createMenuBar()
 
 
-    def createMenuBar(self,frame):
+    def createMenuBar(self):
         self.menubar = tk.Menu(root)
         filemenu = tk.Menu(self.menubar, tearoff=0)
         filemenu.add_command(label="Open SoundGenerator alone", command=self.startGenerator)
@@ -74,11 +77,8 @@ class MainView(Observer):
 
         helpmenu = tk.Menu(self.menubar, tearoff=0)
         helpmenu.add_command(label="Developer", command=self.dispCredential)
+        helpmenu.add_command(label="Read Me", command=self.dispReadMe)
         self.menubar.add_cascade(label="About", menu=helpmenu)
-
-
-    def donothing(self):
-        print("Do Nothing")
 
 
     def dispCredential(self):
@@ -89,25 +89,31 @@ class MainView(Observer):
         print("exit :",answer)
         if answer==True :
             root.quit()
+    
+    def dispReadMe(self):
+        print("Test ReadMe")
+        f= open("README.txt","r")
+        content = f.read()
+        messagebox.showinfo("ReadMe",content)
+        f.close()
+
 
     def startGenerator(self):
         if self.generatorTopLevel==None:
             self.generatorTopLevel = tk.Toplevel()      #frame
-            self.generatorTopLevel.minsize(1000,410)
-            self.generatorTopLevel.resizable(False, False)
-
-            self.soundGeneratorModelTopLevel = SoundGeneratorModel()
-            self.soundGeneratorViewTopLevel = SoundGeneratorView(self.generatorTopLevel,self.soundGeneratorModelTopLevel)
-            self.soundGeneratorControllerTopLevel=SoundGeneratorController(self.soundGeneratorViewTopLevel.topFrame,self.soundGeneratorModelTopLevel,self.soundGeneratorViewTopLevel)
+            self.generatorTopLevel.minsize(1170, 420)
+            
+            self.soundGeneratorViewTopLevel = SoundGeneratorView(self.generatorTopLevel,self.soundGeneratorModel)
+            self.soundGeneratorControllerTopLevel=SoundGeneratorController(self.soundGeneratorViewTopLevel.topFrame,self.soundGeneratorModel,self.soundGeneratorViewTopLevel)
             self.soundGeneratorViewTopLevel.packing(mainFrame=True)
             self.soundGeneratorControllerTopLevel.packing()
-            self.soundGeneratorModelTopLevel.attach(self.soundGeneratorViewTopLevel)
-            self.soundGeneratorModelTopLevel.attach(self.soundGeneratorView)
+            self.soundGeneratorModel.attach(self.soundGeneratorViewTopLevel)
         else :
             messagebox.showinfo("Impossible","Le générateur de sons est déjà lancé")
 
     def startVisualizer(self):
         self.visualizerTopLevel = tk.Toplevel()     #frame
+        self.visualizerTopLevel.minsize(280,650)
 
         self.visualizerModelTopLevel = FreqModel()
         self.visualizerViewTopLevel = FreqView(self.visualizerTopLevel)

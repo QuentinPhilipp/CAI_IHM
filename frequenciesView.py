@@ -203,6 +203,7 @@ class FreqController():
 if  __name__ == "__main__" :
     root=tk.Tk()
     root.title("Vue Frequencies")
+    root.minsize(280,650)
     print('Create model')
     model=FreqModel("signalPiano")
     print("Model created")
