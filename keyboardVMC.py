@@ -190,17 +190,17 @@ class PianoView(Observer) :
         self.hideButton.pack(side=tk.TOP)
 
     def createHideButton(self):
-        self.hideButton=tk.Button(self.parent,bg = "white",width=12,text="Hide Note")
+        self.hideButton=tk.Button(self.parent,bg = "white",width=12,text="Cacher les notes")
         self.hideButton.bind("<ButtonRelease-1>",self.changeNoteNameVisibility)
     
     def changeNoteNameVisibility(self,event=None):
         self.noteVisibility = not self.noteVisibility
         if(self.noteVisibility):
             self.noteVisibility=True
-            self.hideButton["text"]="Hide Note"
+            self.hideButton["text"]="Cacher les notes"
         else : 
             self.noteVisibility=False
-            self.hideButton["text"]="Display Note"
+            self.hideButton["text"]="Afficher les notes"
 
         self.octaves = []
         self.frame.destroy()
@@ -216,7 +216,7 @@ if __name__ == "__main__" :
     root = tk.Tk()
     root.minsize(1400, 250)
     octaves=5
-    root.title("La leçon de piano à "+ str(octaves) + " octaves")
+    root.title("Piano à "+ str(octaves) + " octaves")
     view = PianoView(root,octaves)
     view.packing()
 

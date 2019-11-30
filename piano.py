@@ -2,9 +2,9 @@
 # https://stackoverflow.com/questions/34522095/gui-button-hold-down-tkinter
 
 import sys
-from frequenciesView import *
-from soundView import *
-from keyboard import *
+from frequenciesVMC import *
+from generatorVMC import *
+from keyboardVMC import *
 import collections
 from observer  import *
 import subprocess

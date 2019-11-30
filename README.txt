@@ -6,11 +6,11 @@ Projet Global : piano.py
 
 
 Visualisation des frequences
-    frequenciesView.py
+    frequenciesVMC.py
 Piano (Juste le clavier)
-    keyboard.py
+    keyboardVMC.py
 Creation de sons
-    soundView.py
+    generatorVMC.py
 
 
 Vous pouvez lancer le
